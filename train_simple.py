@@ -460,7 +460,7 @@ def parse_opt(known=False):
 def main(opt, callbacks=Callbacks()):
     """Runs training or hyperparameter evolution with specified options and optional callbacks."""
     print_args(vars(opt))
-    check_git_status(repo="ircvlab/aue8088-pa2", branch="main")
+    check_git_status(repo="seheonha/aue8088-pa2", branch="main")
     check_requirements(ROOT / "requirements.txt")
 
     opt.data, opt.cfg, opt.hyp, opt.weights, opt.project = (

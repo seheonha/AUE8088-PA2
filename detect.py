@@ -34,6 +34,9 @@ import os
 import platform
 import sys
 from pathlib import Path
+import cv2
+import glob
+from utils.plots import plot_images
 
 import torch
 
@@ -305,6 +308,27 @@ def main(opt):
     """Executes YOLOv5 model inference with given options, checking requirements before running the model."""
     check_requirements(ROOT / "requirements.txt", exclude=("tensorboard", "thop"))
     run(**vars(opt))
+    
+    # here to modify
+    save_dir = "/home/seheonha/git_HW/aue8088-pa2/runs/detect/exp5"
+    img_files = glob.glob(os.path.join(save_dir,'*.jpg'))
+    if not img_files:
+        print("No image files found in the specified directory")
+        return
+
+    img_files.sort()
+    img = cv2.imread(img_files[0])
+    height, width, layers = img.shape
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video = cv2.VideoWriter('output.mp4', fourcc, 10, (width, height))
+
+    for img_file in img_files:
+        img = cv2.imread(img_file)
+        video.write(img)
+    video.release()
+
+    print("The detected images were successfully converted to a video")
 
 
 if __name__ == "__main__":

@@ -484,3 +484,12 @@ if __name__ == "__main__":
 
     else:  # report fused model summary
         model.fuse()
+    model.to(device)
+    torch.onnx.export(
+        model,
+        im,
+        "yolov5_model.onnx",
+        export_params=True,
+        opset_version=11,
+        do_constant_folding=True
+    )
