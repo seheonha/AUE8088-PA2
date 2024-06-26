@@ -38,7 +38,7 @@ import val as validate  # for end-of-epoch mAP
 from models.experimental import attempt_load
 from models.yolo import Model
 from utils.callbacks import Callbacks
-from utils.dataloaders import create_dataloader
+from utils.dataloaders_havetofix import create_dataloader
 from utils.downloads import attempt_download
 from utils.general import (
     LOGGER,
@@ -64,7 +64,7 @@ from utils.general import (
     yaml_save,
 )
 from utils.loggers import LOGGERS, Loggers
-from utils.loss import ComputeLoss
+from utils.loss_sub import ComputeLoss
 from utils.metrics import fitness
 from utils.torch_utils import (
     EarlyStopping,
@@ -143,8 +143,8 @@ def train(hyp, opt, device, callbacks):
     
     print("**************************** val path: " , val_path)
     # mine
-    val_path2 = "/home/seheonha/git_HW/kaist-rgbt/test-all-20.txt"
-
+    #val_path2 = "/home/seheonha/git_HW/kaist-rgbt/test-all-20.txt"
+    val_path2 = data_dict["test"]
 
     nc = 1 if single_cls else int(data_dict["nc"])  # number of classes
     names = {0: data_dict["names"][0]} if single_cls and len(data_dict["names"]) != 1 else data_dict["names"]  # class names
@@ -198,7 +198,7 @@ def train(hyp, opt, device, callbacks):
         gs,
         single_cls,
         hyp=hyp,
-        augment=False,      # TODO: make it work
+        augment=True,      # TODO: make it work
         cache=None if opt.cache == "val" else opt.cache,
         rect=opt.rect,
         rank=-1,
@@ -295,8 +295,10 @@ def train(hyp, opt, device, callbacks):
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         callbacks.run("on_train_epoch_start")
         model.train()
-
+        #### modify
         mloss = torch.zeros(3, device=device)  # mean losses
+        #mloss = torch.zeros(3, device=device)  # mean losses
+        ####
         pbar = enumerate(train_loader)
         LOGGER.info(("\n" + "%11s" * 7) % ("Epoch", "GPU_mem", "box_loss", "obj_loss", "cls_loss", "Instances", "Size"))
 
@@ -346,9 +348,10 @@ def train(hyp, opt, device, callbacks):
             # Log
             mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
             mem = f"{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G"  # (GB)
+            #### delete description
             pbar.set_description(
-                ("%11s" * 2 + "%11.4g" * 5)
-                % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], (imgs[0] if isinstance(imgs, list) else imgs).shape[-1])
+               ("%11s" * 2 + "%11.4g" * 5)
+               % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], (imgs[0] if isinstance(imgs, list) else imgs).shape[-1])
             )
             callbacks.run("on_train_batch_end", model, ni, imgs, targets, paths, list(mloss))
             if callbacks.stop_training:
@@ -425,72 +428,74 @@ def train(hyp, opt, device, callbacks):
             if f is best:
                 LOGGER.info(f"\nValidating {f}...")
                 #mine
-                # val_loader2 = create_dataloader(
-                #     val_path2,
-                #     imgsz,
-                #     batch_size * 2,
-                #     gs,
-                #     single_cls,
-                #     hyp=hyp,
-                #     cache=None,
-                #     rect=False,     # Should be set to False for validation, otherwise it will break evaluation pipeline
-                #     rank=-1,
-                #     workers=workers,
-                #     pad=0.5,
-                #     prefix=colorstr("val2: "),
-                #     rgbt_input=opt.rgbt,
-                # )[0]
-                #mine
-                # results, _, _ = validate.run(
-                #     data_dict,
-                #     batch_size=batch_size * 2,
-                #     imgsz=imgsz,
-                #     model=attempt_load(f, device).half(),
-                #     iou_thres=0.65 if is_coco else 0.60,  # best pycocotools at iou 0.65
-                #     single_cls=single_cls,
-                #     dataloader=val_loader2,
-                #     save_dir=save_dir,
-                #     save_json=True,
-                #     verbose=True,
-                #     plots=False,
-                #     callbacks=callbacks,
-                #     compute_loss=compute_loss, 
-                # )  # val best model with plots
-                # mine3
-                test_loader = create_dataloader(
-                    test_path,
+                val_loader = create_dataloader(
+                    val_path2,
                     imgsz,
                     batch_size * 2,
                     gs,
                     single_cls,
                     hyp=hyp,
-                    cache=None if opt.cache == "test" else opt.cache,# if noval else opt.cache,
+                    cache=None,
                     rect=False,     # Should be set to False for validation, otherwise it will break evaluation pipeline
                     rank=-1,
                     workers=workers,
                     pad=0.5,
-                    prefix=colorstr("val: "),
+                    prefix=colorstr("val2: "),
                     rgbt_input=opt.rgbt,
                 )[0]
+                #mine
                 results, _, _ = validate.run(
                     data_dict,
                     batch_size=batch_size * 2,
                     imgsz=imgsz,
-                    #model=attempt_load(f, device).half(),
-                    model=attempt_load(f, device),
-                    iou_thres=0.65, #if is_coco else 0.60,  # best pycocotools at iou 0.65
+                    model=attempt_load(f, device).half(),
+                    #model=attempt_load(f, device),
+                    iou_thres=0.65 if is_coco else 0.60,  # best pycocotools at iou 0.65
+                    #iou_thres=0.65,
                     single_cls=single_cls,
-                    dataloader=test_loader,
+                    dataloader=val_loader,
                     save_dir=save_dir,
                     save_json=True,
-                    #verbose=True,
-                    verbose=False,
+                    verbose=True,
                     plots=False,
                     callbacks=callbacks,
                     compute_loss=compute_loss, 
                 )  # val best model with plots
-                #if is_coco:
-                #    callbacks.run("on_fit_epoch_end", list(mloss) + list(results) + lr, epoch, best_fitness, fi)
+                # mine3
+                # test_loader = create_dataloader(
+                #     test_path,
+                #     imgsz,
+                #     batch_size * 2,
+                #     gs,
+                #     single_cls,
+                #     hyp=hyp,
+                #     cache=None if opt.cache == "test" else opt.cache,# if noval else opt.cache,
+                #     rect=False,     # Should be set to False for validation, otherwise it will break evaluation pipeline
+                #     rank=-1,
+                #     workers=workers,
+                #     pad=0.5,
+                #     prefix=colorstr("val: "),
+                #     rgbt_input=opt.rgbt,
+                # )[0]
+                # results, _, _ = validate.run(
+                #     data_dict,
+                #     batch_size=batch_size * 2,
+                #     imgsz=imgsz,
+                #     model=attempt_load(f, device).half(),
+                #     #model=attempt_load(f, device),
+                #     iou_thres=0.65, #if is_coco else 0.60,  # best pycocotools at iou 0.65
+                #     single_cls=single_cls,
+                #     dataloader=test_loader,
+                #     save_dir=save_dir,
+                #     save_json=True,
+                #     verbose=True,
+                #     verbose=False,
+                #     plots=False,
+                #     callbacks=callbacks,
+                #     compute_loss=compute_loss, 
+                # )  # val best model with plots
+                if is_coco:
+                    callbacks.run("on_fit_epoch_end", list(mloss) + list(results) + lr, epoch, best_fitness, fi)
 
     callbacks.run("on_train_end", last, best, epoch, results)
 

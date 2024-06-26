@@ -372,7 +372,7 @@ def plot_labels(labels, names=(), save_dir=Path("")):
 
 def imshow_cls(im, labels=None, pred=None, names=None, nmax=25, verbose=False, f=Path("images.jpg")):
     """Displays a grid of images with optional labels and predictions, saving to a file."""
-    from utils.augmentations import denormalize
+    from utils.augmentations_original import denormalize
 
     names = names or [f"class{i}" for i in range(1000)]
     blocks = torch.chunk(

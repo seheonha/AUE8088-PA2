@@ -9,8 +9,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, distributed
 
-from ..augmentations import augment_hsv, copy_paste, letterbox
-from ..dataloaders import InfiniteDataLoader, LoadImagesAndLabels, SmartDistributedSampler, seed_worker
+from ..augmentations_original import augment_hsv, copy_paste, letterbox
+from ..dataloaders_havetofix import InfiniteDataLoader, LoadImagesAndLabels, SmartDistributedSampler, seed_worker
 from ..general import LOGGER, xyn2xy, xywhn2xyxy, xyxy2xywhn
 from ..torch_utils import torch_distributed_zero_first
 from .augmentations import mixup, random_perspective
@@ -25,7 +25,8 @@ def create_dataloader(
     stride,
     single_cls=False,
     hyp=None,
-    augment=False,
+    #augment=False,
+    augment=True,
     cache=False,
     pad=0.0,
     rect=False,
@@ -87,7 +88,8 @@ class LoadImagesAndLabelsAndMasks(LoadImagesAndLabels):  # for training/testing
         path,
         img_size=640,
         batch_size=16,
-        augment=False,
+        #augment=False,
+        augment=True,
         hyp=None,
         rect=False,
         image_weights=False,

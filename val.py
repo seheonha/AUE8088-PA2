@@ -221,7 +221,10 @@ def run(
     s = ("%22s" + "%11s" * 6) % ("Class", "Images", "Instances", "P", "R", "mAP50", "mAP50-95")
     tp, fp, p, r, f1, mp, mr, map50, ap50, map = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     dt = Profile(device=device), Profile(device=device), Profile(device=device)  # profiling times
-    loss = torch.zeros(3, device=device)
+    #loss = torch.zeros(3, device=device)
+    #### modify
+    loss = torch.zeros(3,device = device)
+    ####
     jdict, stats, ap, ap_class = [], [], [], []
     callbacks.run("on_val_start")
     pbar = tqdm(dataloader, desc=s, bar_format=TQDM_BAR_FORMAT)  # progress bar
@@ -368,25 +371,25 @@ def run(
             LOGGER.info(f"kaisteval unable to run: {e}")
 
         # Run evaluation: MSCOCO Dataset
-        anno_json = str(Path("../datasets/coco/annotations/instances_val2017.json"))  # annotations
-        if not os.path.exists(anno_json):
-            anno_json = os.path.join(data["path"], "annotations", "instances_val2017.json")
-        try:  # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
-            check_requirements("pycocotools>=2.0.6")
-            from pycocotools.coco import COCO
-            from pycocotools.cocoeval import COCOeval
+        # anno_json = str(Path("../datasets/coco/annotations/instances_val2017.json"))  # annotations
+        # if not os.path.exists(anno_json):
+        #     anno_json = os.path.join(data["path"], "annotations", "instances_val2017.json")
+        # try:  # https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocoEvalDemo.ipynb
+        #     check_requirements("pycocotools>=2.0.6")
+        #     from pycocotools.coco import COCO
+        #     from pycocotools.cocoeval import COCOeval
 
-            anno = COCO(anno_json)  # init annotations api
-            pred = anno.loadRes(pred_json)  # init predictions api
-            eval = COCOeval(anno, pred, "bbox")
-            if is_coco:
-                eval.params.imgIds = [int(Path(x).stem) for x in dataloader.dataset.im_files]  # image IDs to evaluate
-            eval.evaluate()
-            eval.accumulate()
-            eval.summarize()
-            map, map50 = eval.stats[:2]  # update results (mAP@0.5:0.95, mAP@0.5)
-        except Exception as e:
-            LOGGER.info(f"pycocotools unable to run: {e}")
+        #     anno = COCO(anno_json)  # init annotations api
+        #     pred = anno.loadRes(pred_json)  # init predictions api
+        #     eval = COCOeval(anno, pred, "bbox")
+        #     if is_coco:
+        #         eval.params.imgIds = [int(Path(x).stem) for x in dataloader.dataset.im_files]  # image IDs to evaluate
+        #     eval.evaluate()
+        #     eval.accumulate()
+        #     eval.summarize()
+        #     map, map50 = eval.stats[:2]  # update results (mAP@0.5:0.95, mAP@0.5)
+        # except Exception as e:
+        #     LOGGER.info(f"pycocotools unable to run: {e}")
 
     # Return results
     model.float()  # for training

@@ -250,6 +250,7 @@ class Loggers:
         if self.csv:
             file = self.save_dir / "results.csv"
             n = len(x) + 1  # number of cols
+            ####modify
             s = "" if file.exists() else (("%20s," * n % tuple(["epoch"] + self.keys)).rstrip(",") + "\n")  # add header
             with open(file, "a") as f:
                 f.write(s + ("%20.5g," * n % tuple([epoch] + vals)).rstrip(",") + "\n")

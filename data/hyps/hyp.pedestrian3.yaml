@@ -1,0 +1,28 @@
+lr0: 0.0075  # initial learning rate를 약간 낮추어 더 안정적인 학습을 유도
+lrf: 0.01  # final OneCycleLR learning rate 유지
+momentum: 0.95  # momentum을 약간 높여 더 빠른 수렴 유도
+weight_decay: 0.0005  # weight decay 유지
+warmup_epochs: 2.0  # warmup epochs를 줄여 초기 학습 속도 증가
+warmup_momentum: 0.75  # warmup 초기 모멘텀을 약간 낮춤
+warmup_bias_lr: 0.1  # warmup 초기 bias lr 유지
+box: 0.05  # box loss gain 유지
+cls: 0.4  # cls loss gain을 약간 낮춤
+cls_pw: 1.0  # cls BCELoss positive_weight 유지
+obj: 0.8  # obj loss gain을 약간 낮춤
+obj_pw: 1.0  # obj BCELoss positive_weight 유지
+iou_t: 0.20  # IoU training threshold 유지
+anchor_t: 4.0  # anchor-multiple threshold 유지
+fl_gamma: 0.0  # focal loss gamma 유지
+hsv_h: 0.02  # HSV-Hue augmentation을 약간 증가
+hsv_s: 0.7  # HSV-Saturation augmentation 유지
+hsv_v: 0.4  # HSV-Value augmentation 유지
+degrees: 0.1  # image rotation을 약간 추가
+translate: 0.15  # image translation을 약간 증가
+scale: 0.55  # image scale을 약간 증가
+shear: 0.1  # image shear를 약간 추가
+perspective: 0.0  # image perspective 유지
+flipud: 0.0  # image flip up-down 유지
+fliplr: 0.5  # image flip left-right 유지
+mosaic: 1.0  # image mosaic 유지
+mixup: 0.1  # image mixup을 약간 추가
+copy_paste: 0.1  # segment copy-paste를 약간 추가

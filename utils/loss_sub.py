@@ -109,6 +109,9 @@ class ComputeLoss:
         device = next(model.parameters()).device  # get model device
         h = model.hyp  # hyperparameters
 
+        #### add model
+        self.model = model
+        ####
         # Define criteria
         BCEcls = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h["cls_pw"]], device=device))
         BCEobj = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([h["obj_pw"]], device=device))
@@ -131,6 +134,7 @@ class ComputeLoss:
         self.anchors = m.anchors
         self.device = device
 
+    
     def __call__(self, p, targets):  # predictions, targets
         """Performs forward pass, calculating class, box, and object loss for given predictions and targets."""
         lcls = torch.zeros(1, device=self.device)  # class loss
@@ -138,6 +142,11 @@ class ComputeLoss:
         lobj = torch.zeros(1, device=self.device)  # object loss
         tcls, tbox, indices, anchors = self.build_targets(p, targets)  # targets
 
+        #### add 2024-06-23
+        lcls_person = torch.zeros(1, device=self.device)  # person class loss
+        lcls_people = torch.zeros(1, device=self.device)  # people class loss
+        ####
+        
         # Losses
         for i, pi in enumerate(p):  # layer index, layer predictions
             b, a, gj, gi = indices[i]  # image, anchor, gridy, gridx
@@ -171,12 +180,25 @@ class ComputeLoss:
 
                 tobj[b, a, gj, gi] = iou  # iou ratio
 
+                #### add line
+                t = torch.full_like(pcls, self.cn, device=self.device)
+                ####
+
                 # Classification
                 if self.nc > 1:  # cls loss (only if multiple classes)
                     t = torch.full_like(pcls, self.cn, device=self.device)  # targets
                     t[range(n), tcls[i]] = self.cp
                     lcls += self.BCEcls(pcls, t)  # BCE
 
+                #### Separate losses for 'person' and 'people' classes
+                #person_idx = (tcls[i] == self.model.names['person'])
+                #people_idx = (tcls[i] == self.model.names['people'])
+                person_idx = (tcls[i] == 0)  # 'person' class index is 0
+                people_idx = (tcls[i] == 2)  # 'people' class index is 2
+                lcls_person += self.BCEcls(pcls[person_idx], t[person_idx])  # BCE for 'person'
+                lcls_people += self.BCEcls(pcls[people_idx], t[people_idx])  # BCE for 'people'
+                ####
+                
                 # Append targets to text file
                 # with open('targets.txt', 'a') as file:
                 #     [file.write('%11.5g ' * 4 % tuple(x) + '\n') for x in torch.cat((txy[i], twh[i]), 1)]
@@ -191,9 +213,20 @@ class ComputeLoss:
         lbox *= self.hyp["box"]
         lobj *= self.hyp["obj"]
         lcls *= self.hyp["cls"]
+
+        #### add
+        lcls_person *= self.hyp["cls"]
+        lcls_people *= self.hyp["cls"]
+        ####
+
         bs = tobj.shape[0]  # batch size
 
+        #### modify return
+        #return (lbox + lobj + lcls + lcls_person + lcls_people) * bs, torch.cat((lbox, lobj, lcls, lcls_person, lcls_people)).detach()
+        #return (lbox + lobj + lcls + lcls_person + lcls_people) * bs, torch.cat((lbox, lobj, lcls)).detach()
         return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
+        ####
+        #return (lbox + lobj + lcls) * bs, torch.cat((lbox, lobj, lcls)).detach()
 
     def build_targets(self, p, targets):
         """Prepares model targets from input targets (image,class,x,y,w,h) for loss computation, returning class, box,

@@ -7,7 +7,7 @@ import random
 import cv2
 import numpy as np
 
-from ..augmentations import box_candidates
+from ..augmentations_original import box_candidates
 from ..general import resample_segments, segment2box
 
 
